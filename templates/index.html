@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kotak Live Market Studio</title><link rel="stylesheet" href="/static/style.css"></head>
+<body><header><div><b>KOTAK LIVE MARKET STUDIO</b><small>Stocks • Mutual Funds • Live Market • Analysis</small></div><span id="clock"></span></header>
+<nav>
+<button onclick="tab('live')">Live Market</button><button onclick="tab('stocks')">Stock Screener</button>
+<button onclick="tab('funds')">Mutual Funds</button><button onclick="tab('analysis')">Search & Analysis</button>
+</nav><main>
+<section id="live" class="page">
+<div class="hero"><div><h1>Live Indian Market</h1><p>Kotak Neo feed. Browser refresh is instant from server cache — no 1-second Yahoo overload.</p></div>
+<div class="login"><input id="totp" maxlength="6" placeholder="Current 6-digit TOTP"><button onclick="kotakLogin()">Connect Live</button><span id="kstatus">Checking…</span></div></div>
+<div class="indices"><div class="card"><label>NIFTY 50</label><strong id="q-NIFTY_50">--</strong></div><div class="card"><label>BANK NIFTY</label><strong id="q-BANK_NIFTY">--</strong></div><div class="card"><label>SENSEX</label><strong id="q-SENSEX">--</strong></div></div>
+<div class="panel"><h2>Watchlist</h2><div class="row"><input id="watch" value="RELIANCE,TCS,HDFCBANK,ICICIBANK,INFY"><button onclick="saveWatch()">Apply</button></div><div id="watchgrid" class="watchgrid"></div></div>
+</section>
+<section id="stocks" class="page hide"><div class="panel"><h2>Stock Screener</h2><div class="controls">
+<select id="universe"><option value="nifty50">Nifty 50</option><option value="midcap150">Midcap 150</option><option value="smallcap250">Smallcap 250</option><option value="all">All</option></select>
+<select id="period"><option>1m</option><option>2m</option><option selected>6m</option><option>1y</option><option>3y</option><option>5y</option></select>
+<input id="growth" type="number" placeholder="Min return %"><input id="top" type="number" value="20" min="1" max="100"><label><input id="consistent" type="checkbox"> Consistent</label>
+<button onclick="runStocks()">Run Screener</button><button onclick="exportRows()">Excel</button></div><div id="stockmsg"></div><div id="stocktable" class="tablebox"></div></div></section>
+<section id="funds" class="page hide"><div class="panel"><h2>Mutual Fund Screener</h2><div class="controls"><input id="fundq" value="flexi cap"><select id="fundperiod"><option>6m</option><option selected>1y</option><option>3y</option><option>5y</option></select><input id="fundgrowth" type="number" placeholder="Min return %"><button onclick="runFunds()">Run Funds</button></div><div id="fundmsg"></div><div id="fundtable" class="tablebox"></div></div></section>
+<section id="analysis" class="page hide"><div class="panel"><h2>Stock Analysis</h2><div class="row"><input id="ticker" placeholder="RELIANCE"><button onclick="analyze()">Analyze</button></div><div id="analysisout"></div></div></section>
+</main><script src="/static/app.js"></script></body></html>
