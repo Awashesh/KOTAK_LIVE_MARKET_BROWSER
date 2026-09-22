@@ -1,0 +1,22 @@
+
+let lastRows=[];
+const $=id=>document.getElementById(id);
+function tab(id){document.querySelectorAll('.page').forEach(x=>x.classList.add('hide'));$(id).classList.remove('hide')}
+async function api(url,opt={}){let r=await fetch(url,opt),t=await r.text();let j;try{j=JSON.parse(t)}catch(e){throw new Error(`Server returned ${r.status}: ${t.slice(0,120)}`)}if(!r.ok||!j.ok)throw new Error(j.error||`HTTP ${r.status}`);return j}
+function n(v){let x=Number(v);return Number.isFinite(x)?x.toLocaleString('en-IN',{maximumFractionDigits:2}):'--'}
+function cls(v){return Number(v)>=0?'up':'down'}
+async function status(){try{let j=await api('/api/kotak/status'),s=j.data;$('kstatus').textContent=s.connected?'● LIVE':(s.authenticated?'Connecting…':(s.configured?'Ready - enter TOTP':'Add Render credentials'));$('kstatus').className=s.connected?'ok':''}catch(e){$('kstatus').textContent=e.message}}
+async function kotakLogin(){try{$('kstatus').textContent='Connecting…';await api('/api/kotak/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({totp:$('totp').value})});$('totp').value='';status()}catch(e){$('kstatus').textContent=e.message;$('kstatus').className='error'}}
+function quoteCard(q){return `<div class="quote" onclick="openStock('${q.symbol}')"><b>${q.symbol}</b><strong>${n(q.ltp)}</strong><div class="${cls(q.pct)}">${q.pct==null?'':n(q.pct)+'%'}</div><small>${q.source||''} ${q.updated||''}</small></div>`}
+async function pollLive(){try{let j=await api('/api/live'),d=j.data.quotes||{};for(let k of ['NIFTY 50','BANK NIFTY','SENSEX']){let q=d[k];$('q-'+k.replace(' ','_')).textContent=q?n(q.ltp):'--'}let stocks=Object.values(d).filter(q=>!['NIFTY 50','BANK NIFTY','SENSEX'].includes(q.symbol));if(stocks.length)$('watchgrid').innerHTML=stocks.map(quoteCard).join('')}catch(e){}}
+async function restFallback(){try{let syms=$('watch').value;let j=await api('/api/quotes?symbols='+encodeURIComponent(syms));let d=j.data||{};if(Object.keys(d).length)$('watchgrid').innerHTML=Object.values(d).map(quoteCard).join('')}catch(e){}}
+async function saveWatch(){let a=$('watch').value.split(',').map(x=>x.trim()).filter(Boolean);try{await api('/api/live/watch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbols:a})});await restFallback()}catch(e){alert(e.message)}}
+function table(rows){if(!rows.length)return 'No data';let cols=Object.keys(rows[0]);return `<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${r[c]??''}</td>`).join('')}</tr>`).join('')}</tbody></table>`}
+async function runStocks(){try{$('stockmsg').textContent='Loading…';let u=`/api/stocks?universe=${$('universe').value}&period=${$('period').value}&top=${$('top').value}&min_growth=${$('growth').value}&consistent=${$('consistent').checked?1:0}`;let j=await api(u);lastRows=j.data;$('stocktable').innerHTML=table(lastRows);$('stockmsg').textContent=`${lastRows.length} stocks`;}catch(e){$('stockmsg').innerHTML=`<span class=error>${e.message}</span>`}}
+async function runFunds(){try{$('fundmsg').textContent='Loading…';let u=`/api/funds?q=${encodeURIComponent($('fundq').value)}&period=${$('fundperiod').value}&min_growth=${$('fundgrowth').value}`;let j=await api(u);lastRows=j.data;$('fundtable').innerHTML=table(lastRows);$('fundmsg').textContent=`${lastRows.length} funds`;}catch(e){$('fundmsg').innerHTML=`<span class=error>${e.message}</span>`}}
+async function analyze(){try{$('analysisout').textContent='Analyzing…';let j=await api('/api/analyze/equity?ticker='+encodeURIComponent($('ticker').value)),d=j.data;let r=d.row;$('analysisout').innerHTML=`<h3>${d.name}</h3><div class=stats>${Object.entries(r).map(([k,v])=>`<div class=stat><small>${k}</small><br><b>${v??'-'}</b></div>`).join('')}</div>`}catch(e){$('analysisout').innerHTML=`<span class=error>${e.message}</span>`}}
+function openStock(s){tab('analysis');$('ticker').value=s;analyze()}
+async function exportRows(){if(!lastRows.length)return alert('Pehle screener run karein');let r=await fetch('/api/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:lastRows})});if(!r.ok)return alert('Export failed');let b=await r.blob(),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='market_report.xlsx';a.click()}
+setInterval(()=>{$('clock').textContent=new Date().toLocaleTimeString('en-IN')},1000);
+setInterval(pollLive,1000); setInterval(status,5000); setInterval(restFallback,10000);
+status();pollLive();restFallback();
